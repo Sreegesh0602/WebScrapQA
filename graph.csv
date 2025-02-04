@@ -1,0 +1,17 @@
+node_1,node_2,edge,entity,importance,category,node1,node2,term,nodes,edges,concept,categories,count
+World War II,Second World War,Both terms refer to the same historical event.,Historical Event,5.0,Event,,,,,,,,4
+World War II,European Devastation,"Direct causal relationship as the outcome of European devastation led to decolonization of Africa and Asia, and indirectly contributed to the rise of superpowers like US and USSR.",Decolonisation of Africa and Asia,4.0,Event,,,,,,,,4
+World War II,Economic recovery,A key event that led to economic recovery after the devastating effects of World War II.,War,5.0,Event,,,,,,,,4
+Germany,Central Powers,Refers to the defeated allies of Germany during World War I.,Concept,5.0,Organization,,,,,,,,4
+German Annexation,Germany's Home Territory,The German Empire dissolved and Germany lost 13% of its home territory due to the Treaty of Versailles.,Annexation,5.0,Policy/Politics,,,,,,,,4
+Germany,Europe,has goals to capture vast areas of Eastern Europe,Germany,5.0,Country,,,,,,,,4
+Kuomintang,CCP forces,the Kuomintang and CCP forces agreed on a ceasefire to present a united front.,Kuomintang and CCP forces,5.0,political party,,,,,,,,4
+Nationalist,Axis,"The Nationalists were supported by the Axis powers, including Germany and Italy.",Axis,5.0,Organization,,,,,,,,4
+Pingxingguan,Communist forces,Fought against each other in Pingxingguan,Location and Event,4.0,Event,,,,,,,,4
+Sino-Japanese War,Neutrality Pact,The Neutrality Pact was signed between Japan and the Soviet Union in April 1941.,Concept of neutrality agreement between two countries,4.0,International Relations,,,,,,,,4
+Soviet Union,Germany,"Spheres of influence defined by the pact, Germany had western Poland and Lithuania; Soviet Union had eastern Poland, Finland, Estonia, Latvia and Bessarabia.",The Concept of Spheres of Influence,5.0,Location/Region,,,,,,,,4
+Poland,Germany,invaded Poland after having staged several false flag border incidents as a pretext to initiate the invasion.,Geopolitical Entity,5.0,Country,,,,,,,,4
+Poland,Germany,Occupied Poland by Germany,Country,4.0,Politics,,,,,,,,4
+Denmark,CraioVa,The Treaty of Craiova was signed by Denmark.,Denmark,4.0,Location,,,,,,Country,,4
+Vichy Regime,Germany,officially aligned with Germany under the Vichy Regime.,Regime,3.0,Politics,,,,,,,,4
+United States,American public,opposition towards military intervention in the conflict,United States and American public,4.0,People,,,,,,,,4

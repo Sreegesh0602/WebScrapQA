@@ -1,0 +1,10 @@
+pandas>=1.1.0
+numpy>=1.19.0
+langchain>=0.0.148
+neo4j>=4.3.0
+ollama
+wikipedia>=1.4.0
+langchain-ollama>=0.0.7
+wikipedia
+langchain-community
+tqdm
