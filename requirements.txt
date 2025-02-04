@@ -8,3 +8,4 @@ langchain-ollama>=0.0.7
 wikipedia
 langchain-community
 tqdm
+unstructured

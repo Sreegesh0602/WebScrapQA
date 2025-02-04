@@ -14,30 +14,38 @@ from langchain.graphs import Neo4jGraph
 def connect_to_graph():
     return Neo4jGraph()
 
+import pandas as pd
+import json
+
 def graph_prompt(input_text: str, metadata: dict = None, model: str = "mistral-openorca:latest") -> list:
     metadata = metadata or {}
-    print("Input for graph prompt:", input_text)
+
     model_instance = ChatOllama(model=model, format="json")
     sys_prompt = (
         "You are a network graph maker who extracts terms and their relations from a given context. "
-        "You are provided with a context chunk (delimited by ```) "
-        "Your task is to extract the ontology of terms mentioned in the given context. These terms should represent "
-        "the key concepts as per the context.\n"
-        "Thought 1: While traversing through each sentence, think about the key terms mentioned in it. "
-        "Terms may include object, entity, location, organization, person, condition, acronym, documents, service, concept, etc. "
-        "Terms should be as atomistic as possible.\n\n"
-        "Thought 2: Think about how these terms can have one on one relation with other terms. "
-        "Terms that are mentioned in the same sentence or paragraph are typically related to each other. "
-        "Terms can be related to many other terms.\n\n"
-        "Thought 3: Find out the relation between each such related pair of terms.\n\n"
-        "Format your output as a list of JSON objects. Each element should contain keys: "
-        "'node_1', 'node_2', 'edge', 'entity', 'importance', and 'category'. "
-        "Strictly respond in JSON format."
+        "You are provided with a context chunk (delimited by ```). Your task is two-fold: "
+        "first, extract the ontology of key terms in the context along with their relationships; "
+        "second, automatically generate a corresponding Neo4j Cypher query that retrieves these nodes and their relationships. \n"
+        "Important: When generating the Cypher query, ensure every relationship variable (e.g., 'r') used in the pattern is properly defined. "
+        "For example, use patterns like [r:RELATIONSHIP] instead of omitting the variable. \n"
+        "Instructions: \n"
+        "  - Identify relevant nodes (terms) and potential relationships between them. \n"
+        "  - Formulate a Cypher query that uses MERGE or MATCH clauses appropriately, ensuring that any relationship (like 'r') is explicit and defined. \n"
+        "  - Strictly output your final response in valid JSON format as a list of objects. Each object should include keys such as 'node_1', 'node_2', 'edge', 'entity', 'importance', and 'category'. \n"
+        "Example format:\n"
+        "   [{\n"
+        '       "node_1": "Entity A",\n'
+        '       "node_2": "Entity B",\n'
+        '       "edge": "Relation description",\n'
+        '       "entity": "Concept type",\n'
+        '       "importance": 4,\n'
+        '       "category": "Category type"\n'
+        "   }, ...]\n"
+        "Make sure the Cypher query within your JSON response properly defines all used variables."
     )
-    
     user_prompt = f"context: ```{input_text}```"
     full_prompt = f"{sys_prompt}\n\n{user_prompt}"
-    
+    print("Getting graph prompt response...")
     response = model_instance.invoke(full_prompt).content
     try:
         result = json.loads(response)
@@ -48,13 +56,34 @@ def graph_prompt(input_text: str, metadata: dict = None, model: str = "mistral-o
         return None
 
 def df_to_graph(df: pd.DataFrame, model: str = "llama3.2:3B") -> pd.DataFrame:
+    
     results = df.apply(
         lambda row: graph_prompt(row['Page Content'], {"chunk_id": row['chunk_id']}, model),
         axis=1
     )
-    results = results.dropna().reset_index(drop=True)
-    graph_data = pd.DataFrame(results.to_list())
-    return graph_data
+    
+    # Dynamically handle both 'nodes' and 'ontology'
+    nodes_data = []
+    for result in results:
+        if result:
+            # Check if 'nodes' or 'ontology' is in the result
+            if 'nodes' in result:
+                nodes_data.append(result['nodes'])
+            elif 'ontology' in result:
+                nodes_data.append(result['ontology'])
+    
+    # Flatten the list of lists and convert to a DataFrame
+    flattened_nodes = [item for sublist in nodes_data for item in sublist]
+    
+    graph_data = pd.DataFrame(flattened_nodes)
+    
+    # Clean the DataFrame by dropping any NaN values and resetting the index
+    df_cleaned = graph_data.dropna().reset_index(drop=True)
+    
+    # Save the cleaned data to a CSV
+    df_cleaned.to_csv("graph_data.csv", index=False)
+    
+    return df_cleaned
 
 def initialise_neo4j_schema():
     with GraphDatabase.driver(NEO4J_URL, auth=AUTH) as driver:
@@ -100,14 +129,16 @@ def insert_dataframe_to_neo4j(df: pd.DataFrame) -> None:
                             edge_props=edge_props)
             print("Data inserted into Neo4j successfully.")
 
-def execute_with_fallback(query: str, chain: GraphCypherQAChain) -> str:
+def execute_with_fallback(query: str, chain) -> str:
     try:
-        response = chain.run(query)
+        response = chain.invoke(query)
         if response == "I don't know the answer.":
-            raise ValueError("No result found in the graph.")
-    except (ValueError, KeyError) as e:
+            return "No result found in the graph."
+        
+    except Exception as e:
         print("Graph query failed, falling back to Ollama:", e)
-        fallback_model = ChatOllama(model="llama3.2:3b")
+        return "No result found in the graph. Fallback to Ollama."
+        fallback_model = ChatOllama(model="llama3")
         response = fallback_model.invoke(query)
         return response.get("content", "No response.")
     return response

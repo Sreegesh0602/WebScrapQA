@@ -1,0 +1,11 @@
+node_1,node_2,edge,entity,importance,category
+World War II,Second World War,synonyms,Event,5,Historical Event
+Allies,Axis powers,opponents,Organization,4,Military Alliance
+Tanks,Aircraft,complementary technologies,Object,3,Militarized Technology
+Nuclear weapons,Total war,consequences of,Concept,5,Military Concept
+Germany,Japan,enemies,Country,4,Geopolitical Entity
+Poland,Soviet Union,occupied territories,Country,3,Geopolitical Entity
+Holocaust,Genocides,types of war crimes,Event,5,Historical Event
+Fascism,Militarism,related ideologies,Concept,4,Political Ideology
+Manchuria,Sudetenland,regions invaded,Location,3,Geographic Region
+Adolf Hitler,Nazi Germany,leader and organization,Person,5,Historical Figure
