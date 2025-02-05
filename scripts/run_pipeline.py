@@ -57,10 +57,37 @@ def main():
     # Step 5: Execute a sample query on the graph
 
     chain = generate_chain()
-    print("GraphCypherQAChain created chain:", chain)
-    sample_query = "Tell me about germany"
-    result = execute_with_fallback(sample_query, chain)
-    print("Query Result:", result)
+    # sample_query = "tell about Hitler"
+    # result = execute_with_fallback(sample_query, chain)
+    # print("Query Result:", result)
+    # ✅ Invoke the Chain
+    query = "tell about Japan and China"
+    response = chain.invoke(query)  # OR response = chain.run(query)
+
+    # ✅ Extract Full Context (Avoid Iterating Over String)
+    full_context = response.get("full_context") or response.get("result", [])
+
+    # ✅ Check if full_context is a list (structured data) or just a plain string
+    if isinstance(full_context, list):  
+        print("\n🔹 **Extracted Relationships** 🔹\n")
+        for item in full_context:
+            n = item.get("n", {})
+            relatedNode = item.get("relatedNode", {})
+            relationshipType = item.get("type(r)", "Unknown")  # Adjusted key
+            relationshipProperties = item.get("properties(r)", {})
+
+            print(f"🌍 Entity: {n.get('name', 'Unknown')} ({n.get('category', 'N/A')})")
+            print(f"🔗 Relationship: {relationshipType}")
+            print(f"➡️ Related To: {relatedNode.get('name', 'Unknown')} ({relatedNode.get('category', 'N/A')})")
+            print(f"📜 Relationship Details: {relationshipProperties.get('relationship', 'No details')}")
+            print("-" * 50)
+
+    elif isinstance(full_context, str):  
+        print("📝 **Summary Response:**", full_context)  # Handle plain text responses properly
+
+    else:
+        print("⚠️ Unexpected response format:", response)
+
 
 if __name__ == "__main__":
     main()

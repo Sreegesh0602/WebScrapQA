@@ -23,26 +23,28 @@ def graph_prompt(input_text: str, metadata: dict = None, model: str = "mistral-o
     model_instance = ChatOllama(model=model, format="json")
     sys_prompt = (
         "You are a network graph maker who extracts terms and their relations from a given context. "
-        "You are provided with a context chunk (delimited by ```). Your task is two-fold: "
-        "first, extract the ontology of key terms in the context along with their relationships; "
-        "second, automatically generate a corresponding Neo4j Cypher query that retrieves these nodes and their relationships. \n"
-        "Important: When generating the Cypher query, ensure every relationship variable (e.g., 'r') used in the pattern is properly defined. "
-        "For example, use patterns like [r:RELATIONSHIP] instead of omitting the variable. \n"
-        "Instructions: \n"
-        "  - Identify relevant nodes (terms) and potential relationships between them. \n"
-        "  - Formulate a Cypher query that uses MERGE or MATCH clauses appropriately, ensuring that any relationship (like 'r') is explicit and defined. \n"
-        "  - Strictly output your final response in valid JSON format as a list of objects. Each object should include keys such as 'node_1', 'node_2', 'edge', 'entity', 'importance', and 'category'. \n"
-        "Example format:\n"
-        "   [{\n"
-        '       "node_1": "Entity A",\n'
-        '       "node_2": "Entity B",\n'
-        '       "edge": "Relation description",\n'
-        '       "entity": "Concept type",\n'
-        '       "importance": 4,\n'
-        '       "category": "Category type"\n'
-        "   }, ...]\n"
-        "Make sure the Cypher query within your JSON response properly defines all used variables."
+        "You are provided with a context chunk (delimited by ```) Your task is to extract the ontology "
+        "of terms mentioned in the given context. These terms should represent the key concepts as per the context. \n"
+        "Thought 1: While traversing through each sentence, Think about the key terms mentioned in it.\n"
+            "\tTerms may include object, entity, location, organization, person, \n"
+            "\tcondition, acronym, documents, service, concept, etc.\n"
+            "\tTerms should be as atomistic as possible\n\n"
+        "Thought 2: Think about how these terms can have one on one relation with other terms.\n"
+            "\tTerms that are mentioned in the same sentence or the same paragraph are typically related to each other.\n"
+            "\tTerms can be related to many other terms\n\n"
+        "Thought 3: Find out the relation between each such related pair of terms. \n\n"
+        "Format your output as a list of json. Each element of the list contains a pair of terms"
+        "and the relation between them, like the following: \n"
+        "   {\n"
+        '       "node_1": "A concept from extracted ontology",\n'
+        '       "node_2": "A related concept from extracted ontology",\n'
+        '       "edge": "relationship between the two concepts, node_1 and node_2 in one or two sentences"\n'
+        '       "entity": The Concept,\n'
+        '       "importance": The contextual importance of the concept on a scale of 1 to 5 (5 being the highest),\n'
+        '       "category": The Type of Concept,\n'
+        "   }, {...}\n Strictly the response should be in JSON format\n"
     )
+    
     user_prompt = f"context: ```{input_text}```"
     full_prompt = f"{sys_prompt}\n\n{user_prompt}"
     print("Getting graph prompt response...")

@@ -4,11 +4,6 @@ from langchain.chat_models import ChatOllama
 from langchain.prompts import PromptTemplate
 from langchain_ollama import OllamaLLM
 
-
-
-
-
-
 def generate_chain():
     # ✅ Use ChatOllama from LangChain
     llm = ChatOllama(model="llama3", temperature=0)
@@ -38,40 +33,49 @@ def generate_chain():
     print("Existing Labels:", existing_labels)
     print("Existing Relationships:", existing_relationships)
 
-    # ✅ Step 2: Use an advanced Cypher prompt
-
-
-
-    # MATCH (n:Node {name: "Germany"})-[r:RELATIONSHIP]->(relatedNodes)
-    # RETURN n, collect(DISTINCT relatedNodes) AS relatedNodes, collect(DISTINCT r) AS relationships, collect(DISTINCT r.property_name) AS relationshipProperties
-
-
-
-
+    # ✅ Step 2: Advanced Cypher Prompt without Keyword Dependency
     cypher_prompt = PromptTemplate(
-        input_variables=["query"],
-        template = f"""
-        You are a Neo4j Cypher expert. Generate an optimized Cypher query to retrieve information for the user's question.
-        
-        Ensure:
-        - Use the existing labels: {existing_labels}
-        - Use the existing relationships: {existing_relationships}
-        - If a label or relationship doesn't exist, modify the query accordingly.
-        - Do not include importance.
-        - Get the relatedNode, relationship (`r`), relationship type (`r:type`), and any relevant properties of the relationship only if exists.
+    input_variables=["query"],
+    template=f"""
+    You are a Neo4j Cypher expert. Generate an optimized Cypher query to retrieve information for the user's question.
 
-        User Query: {{query}}
+    Ensure and follow the following guidelines strictly:
+    - Use the existing labels: {existing_labels}
+    - Use the existing relationships: {existing_relationships}
+    - Ensure that all nodes and relationships involved are correctly bound.
+    - Always return the relationship variable (`r`) and explicitly define it in the MATCH clause.
+    - Use `COLLECT(DISTINCT ...)` to avoid duplicates.
+    - Dont miss out where clause to filter the results based on the user's query.
+    - Use the 'OR','AND','IS', 'CONTAINS', 'not' 'Null' operator within the where clause not with the match clause
+    - you should use the IS NOT NULL syntax to check if a property exists.
+    - you need to explicitly define the relationship variable r in the MATCH clause.
+    - you cannot introduce new variables or '*' directly in the WHERE clause when they are part of pattern expressions
 
-        Cypher Query:
-    """
-    )
+    The query structure should be:
+
+    ```
+    MATCH (n:Node)-[r:RELATIONSHIP]->(relatedNode)
+    WHERE n.name CONTAINS '{{query}}' OR relatedNode.name CONTAINS '{{query}}'
+    RETURN n, relatedNode, type(r)  , properties(r)  
+    ```
+
+    User Query: {{query}}
+
+    Cypher Query:
+"""
+)
     llm = OllamaLLM(model="llama3")
-    # ✅ Step 3: Use GraphCypherQAChain with Schema Awareness
+
+    # ✅ Step 3: Use GraphCypherQAChain without keyword dependency
     chain = GraphCypherQAChain.from_llm(
-        llm=llm,
-        graph=graph,
-        cypher_prompt=cypher_prompt,
-        verbose=True,
-        allow_dangerous_requests=True
-    )
+    llm=llm,
+    graph=graph,
+    cypher_prompt=cypher_prompt,
+    verbose=True,
+    include_run_info=True,  # ✅ Ensures we capture raw execution info
+    return_direct=True,  # ✅ Forces returning the raw Cypher query result
+    allow_dangerous_requests=True
+)
+
     return chain
+

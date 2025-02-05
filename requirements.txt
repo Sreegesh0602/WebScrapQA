@@ -9,3 +9,4 @@ wikipedia
 langchain-community
 tqdm
 unstructured
+streamlit
